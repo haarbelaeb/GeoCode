@@ -1,0 +1,52 @@
+#########################
+######### 00 - Open Direcciones
+#########################
+import openpyxl
+from openpyxl import load_workbook
+import pandas as pd
+ds_address=('C:/Users/Acer/OneDrive - Universidad EAFIT/Asistencia/CIEF/Santiago/Medellín/HOOVER_OUTPUT_4.xlsx')
+#ds_address=("C:/Users/Acer/OneDrive - Universidad EAFIT/Asistencia/CIEF/Santiago/Medellín/HOOVER_OUTPUT_4.xlsx")
+wb = load_workbook(filename = ds_address)
+data = wb['Sheet1']
+from secrets import API
+
+#########################
+######### 02 - API GOOGLE
+#########################
+import googlemaps
+YOUR_API_KEY = API
+gmaps = googlemaps.Client(key=YOUR_API_KEY)
+
+def geo_coding_google(adrss):
+    geocode_result = gmaps.geocode(adrss)
+    lat,lng = geocode_result[0]['geometry']['location']['lat'],geocode_result[0]['geometry']['location']['lng']
+    return(lat,lng)
+
+#########################
+######### 03 - Build Data
+#########################
+out = []
+
+
+for r in range(2,101):#42207):
+    try:
+        id=str(data.cell(row=r, column=1).value).lower().encode('utf-8').strip()
+        adrss=str(data.cell(row=r, column=2).value).lower().encode('utf-8').strip()
+        adrss=str(adrss)+",medellin,antioquia,colombia"
+        print(adrss)
+        g_c=geo_coding_google(str(adrss))
+        #### Save Data
+        out.append({'id':id,'direccion':adrss,'lat':g_c[0],'lon':g_c[1]})
+
+    except IndexError:
+        out.append({'id':"NA",'direccion':"NA",'lat':"NA"[0],'lon':"NA"[1]})
+        pass
+
+
+#########################
+######### 04 - Export data
+#########################
+
+df = pd.DataFrame(out)
+file_name="C:/Users/Acer/OneDrive - Universidad EAFIT/Asistencia/CIEF/Santiago/Medellín/HOOVER_OUTPUT_3.xlsx"
+df.to_excel(file_name)
